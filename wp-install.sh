@@ -46,5 +46,9 @@ mv wordpress/* ./
 cp wp-config-sample.php wp-config.php
 vim wp-config.php
 echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
+chown -R nginx /usr/share/nginx/html
+vim /etc/nginx/nginx.conf
+vim /etc/php.ini
+vim /etc/php-fpm.d/www.conf
 
 
