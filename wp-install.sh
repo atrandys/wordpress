@@ -7,7 +7,7 @@ service php-fpm start
 chkconfig php-fpm on
 wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
 sudo rpm -ivh mysql-community-release-el7-5.noarch.rpm
-sudo yum install mysql-server
+sudo yum -y install mysql-server
 chkconfig mysqld on
 service mysqld start
 mysql_secure_installation
@@ -33,7 +33,7 @@ server {
     location ~ \.php$ {
         fastcgi_pass   127.0.0.1:9000;
         fastcgi_index  index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         include        fastcgi_params;
     }
 }
@@ -45,5 +45,6 @@ unzip wordpress-4.9.4-zh_CN.zip
 mv wordpress/* ./
 cp wp-config-sample.php wp-config.php
 vim wp-config.php
+echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
 
 
