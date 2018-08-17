@@ -21,9 +21,9 @@ server {
     listen       80;
     server_name  localhost;
     root /usr/share/nginx/html;
+    index index.php index.html index.htm;
     location / {
-        root   /usr/share/nginx/html;
-        index index.php index.html index.htm;
+        try_files $uri $uri/ /index.php?$args;
     }
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
