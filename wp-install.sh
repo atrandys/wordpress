@@ -1,20 +1,24 @@
 #!/bin/bash
 yum -y install  wget unzip vim
+echo "安装PHP7"
 rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
 yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
 service php-fpm start
 chkconfig php-fpm on
+echo "安装mysql"
 wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
 sudo rpm -ivh mysql-community-release-el7-5.noarch.rpm
 sudo yum -y install mysql-server
 chkconfig mysqld on
 service mysqld start
-mysql_secure_installation
-mysql -u root -p 
-sudo rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
-sudo yum install -y nginx
-sudo systemctl enable nginx.service
+echo "配置mysql"
+mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
+echo -e "\ny\n$mysqlpasswd\n$mysqlpasswd\ny\ny\ny\ny\n" | mysql_secure_installation
+echo -e "$mysqlpasswd\ncreate database wordpress_db;\nexit\n" | mysql -u root -p 
+rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
+yum install -y nginx
+systemctl enable nginx.service
 rm -f /etc/nginx/conf.d/default.conf
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server {
