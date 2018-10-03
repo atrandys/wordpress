@@ -1,5 +1,5 @@
 #!/bin/bash
-yum -y install  wget unzip vim
+yum -y install  wget unzip vim tcl expect expect-devel
 echo "安装PHP7"
 rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
@@ -14,6 +14,17 @@ chkconfig mysqld on
 service mysqld start
 echo "配置mysql"
 mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
+/usr/bin/expect << EOF
+spawn mysql_secure_installation
+expect "password for root" {send "\r"}
+expect "root password" {send "Y\r"}
+expect "New password" {send "$mysqlpasswd\r"}
+expect "Re-enter new password" {send "$mysqlpasswd\r"}
+expect "Remove anonymous users" {send "Y\r"}
+expect "Disallow root login remotely" {send "Y\r"}
+expect "database and access" {send "Y\r"}
+expect "Reload privilege tables" {send "Y\r"}
+EOF
 echo -e "\ny\n$mysqlpasswd\n$mysqlpasswd\ny\ny\ny\ny\n" | mysql_secure_installation
 echo -e "$mysqlpasswd\ncreate database wordpress_db;\nexit\n" | mysql -u root -p 
 rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
