@@ -8,8 +8,8 @@ service php-fpm start
 chkconfig php-fpm on
 echo "安装mysql"
 wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
-sudo rpm -ivh mysql-community-release-el7-5.noarch.rpm
-sudo yum -y install mysql-server
+rpm -ivh mysql-community-release-el7-5.noarch.rpm
+yum -y install mysql-server
 chkconfig mysqld on
 service mysqld start
 echo "配置mysql"
