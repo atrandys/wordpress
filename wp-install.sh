@@ -4,8 +4,6 @@ echo "安装PHP7"
 rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
 yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
-sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
-sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
 service php-fpm start
 chkconfig php-fpm on
 echo "安装mysql"
@@ -91,6 +89,9 @@ server {
     }
 }
 EOF
+sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
+sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
+systemctl restart php-fpm.service
 systemctl start nginx.service
 cd /usr/share/nginx/html
 wget https://cn.wordpress.org/wordpress-4.9.4-zh_CN.zip
