@@ -29,6 +29,7 @@ expect "Enter password" {send "$mysqlpasswd\r"}
 expect "mysql" {send "create database wordpress_db;\r"}
 expect "mysql" {send "exit\r"}
 EOF
+echo "安装nginx"
 rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
 yum install -y nginx
 systemctl enable nginx.service
@@ -89,15 +90,18 @@ server {
     }
 }
 EOF
+echo "配置php和php-fpm"
 sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
 sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
 systemctl restart php-fpm.service
 systemctl start nginx.service
+echo "安装WordPress"
 cd /usr/share/nginx/html
 wget https://cn.wordpress.org/wordpress-4.9.4-zh_CN.zip
 unzip wordpress-4.9.4-zh_CN.zip
 mv wordpress/* ./
 cp wp-config-sample.php wp-config.php
+echo "配置参数"
 sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
 echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
 chown -R nginx /usr/share/nginx/html
