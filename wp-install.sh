@@ -1,6 +1,6 @@
 #!/bin/bash
-yum -y install  wget unzip vim tcl expect expect-devel
 yum -y install epel-release
+yum -y install  wget unzip vim tcl expect expect-devel
 echo "安装PHP7"
 rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
