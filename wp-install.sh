@@ -162,11 +162,12 @@ start_menu(){
     echo
     read -p "请输入数字:" num
     case "$num" in
-    1)
+    	1)
 	install_php7
-    install_mysql
-    install_nginx
-    install_wp
+    	install_mysql
+    	install_nginx
+	config_php
+    	install_wp
 	;;
 	2)
 	uninstall_wp
