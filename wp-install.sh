@@ -1,20 +1,30 @@
 #!/bin/bash
-yum -y install epel-release
-yum -y install  wget unzip vim tcl expect expect-devel
-echo "安装PHP7"
-rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
-rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
-yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
-service php-fpm start
-chkconfig php-fpm on
-echo "安装mysql"
-wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
-rpm -ivh mysql-community-release-el7-5.noarch.rpm
-yum -y install mysql-server
-systemctl enable mysqld.service
-systemctl start  mysqld.service
-echo "配置mysql"
-mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
+
+install_php7(){
+    
+    yum -y install epel-release
+    sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
+    yum -y install  wget unzip vim tcl expect expect-devel
+    echo "安装PHP7"
+    rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+    rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
+    yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
+    service php-fpm start
+    chkconfig php-fpm on
+
+}
+
+install_mysql(){
+
+    echo "安装mysql"
+    wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+    rpm -ivh mysql-community-release-el7-5.noarch.rpm
+    yum -y install mysql-server
+    systemctl enable mysqld.service
+    systemctl start  mysqld.service
+    echo "配置mysql"
+    mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
+    
 /usr/bin/expect << EOF
 spawn mysql_secure_installation
 expect "password for root" {send "\r"}
@@ -30,12 +40,18 @@ expect "Enter password" {send "$mysqlpasswd\r"}
 expect "mysql" {send "create database wordpress_db;\r"}
 expect "mysql" {send "exit\r"}
 EOF
-echo "安装nginx"
-rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
-yum install -y nginx
-systemctl enable nginx.service
-rm -f /etc/nginx/conf.d/default.conf
-rm -f /etc/nginx/nginx.conf
+
+}
+
+install_nginx(){
+
+    echo "安装nginx"
+    rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
+    yum install -y nginx
+    systemctl enable nginx.service
+    rm -f /etc/nginx/conf.d/default.conf
+    rm -f /etc/nginx/nginx.conf
+
 cat > /etc/nginx/nginx.conf <<-EOF
 user  nginx;
 worker_processes  1;
@@ -69,6 +85,7 @@ http {
     include /etc/nginx/conf.d/*.conf;
 }
 EOF
+
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server {
     listen       80;
@@ -91,24 +108,80 @@ server {
     }
 }
 EOF
-echo "配置php和php-fpm"
-sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
-sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
-systemctl restart php-fpm.service
-systemctl start nginx.service
-echo "安装WordPress"
-cd /usr/share/nginx/html
-wget https://cn.wordpress.org/wordpress-4.9.4-zh_CN.zip
-unzip wordpress-4.9.4-zh_CN.zip
-mv wordpress/* ./
-cp wp-config-sample.php wp-config.php
-echo "配置参数"
-sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
-echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
-chown -R nginx /usr/share/nginx/html
-echo "=========================="
-echo "WordPress服务端配置已完成"
-echo "请打开浏览器访问服务器进行前台配置"
 
+}
 
+config_php(){
+
+    echo "配置php和php-fpm"
+    sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
+    sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
+    systemctl restart php-fpm.service
+    systemctl start nginx.service
+
+}
+
+install_wp(){
+
+    echo "安装WordPress"
+    cd /usr/share/nginx/html
+    wget https://cn.wordpress.org/wordpress-4.9.4-zh_CN.zip
+    unzip wordpress-4.9.4-zh_CN.zip
+    mv wordpress/* ./
+    cp wp-config-sample.php wp-config.php
+    echo "配置参数"
+    sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
+    echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
+    chown -R nginx /usr/share/nginx/html
+    echo "=========================="
+    echo "WordPress服务端配置已完成"
+    echo "请打开浏览器访问服务器进行前台配置"
+
+}
+
+uninstall_wp(){
+
+    echo "你的wordpress数据将全部丢失！！你确定要卸载吗？"
+    read -s -n1 -p "按回车键开始卸载，按ctrl+c取消"
+    yum remove -y php70w php70w-mysql php70w-gd php70w-xml php70w-fpm mysql-server nginx
+    rm -rf /usr/share/nginx/html/*
+    echo "卸载完成"
+}
+
+start_menu(){
+    clear
+    echo "======================================="
+    echo " 介绍：适用于CentOS7，一键安装wordpress"
+    echo " 作者：atrandys"
+    echo " 网站：www.atrandys.com"
+    echo " Youtube：atrandys"
+    echo "======================================="
+    echo "1. 一键安装wordpress"
+    echo "2. 卸载wordpress"
+    echo "0. 退出脚本"
+    echo
+    read -p "请输入数字:" num
+    case "$num" in
+    1)
+	install_php7
+    install_mysql
+    install_nginx
+    install_wp
+	;;
+	2)
+	uninstall_wp
+	;;
+	0)
+	exit 1
+	;;
+	*)
+	clear
+	echo "请输入正确数字"
+	sleep 5s
+	start_menu
+	;;
+    esac
+}
+
+start_menu
 
