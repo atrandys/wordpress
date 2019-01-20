@@ -1,27 +1,58 @@
 #!/bin/bash
+ 
+function blue(){
+    echo -e "\033[34m $1 \033[0m"
+}
+function green(){
+    echo -e "\033[32m $1 \033[0m"
+}
+function red(){
+    echo -e "\033[31m $1 \033[0m"
+}
+function yellow(){
+    echo -e "\033[33m $1 \033[0m"
+}
+function bred(){
+    echo -e "\033[31m\033[01m\033[05m $1 \033[0m"
+}
+function byellow(){
+    echo -e "\033[33m\033[01m\033[05m $1 \033[0m"
+}
 
 install_php7(){
-    
+
+    green "==============="
+    green "  安装必要软件"
+    green "==============="
     yum -y install epel-release
     sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
     yum -y install  wget unzip vim tcl expect expect-devel
-    echo "安装PHP7"
+    green "==============="
+    green "    安装PHP7"
+    green "==============="
     rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
     yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
     service php-fpm start
     chkconfig php-fpm on
-
+    if [ -n `yum list installed | grep php70` ]; then
+    	green "【checked】 PHP7安装成功"
+	php_status=1
+    fi
 }
 
 install_mysql(){
 
-    echo "安装mysql"
+    green "==============="
+    green "   安装MySQL"
+    green "==============="
     wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
     rpm -ivh mysql-community-release-el7-5.noarch.rpm
     yum -y install mysql-server
     systemctl enable mysqld.service
     systemctl start  mysqld.service
-    echo "配置mysql"
+    green "==============="
+    green "   配置MySQL"
+    green "==============="
     mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
     
 /usr/bin/expect << EOF
@@ -38,8 +69,11 @@ spawn mysql -u root -p
 expect "Enter password" {send "$mysqlpasswd\r"}
 expect "mysql" {send "create database wordpress_db;\r"}
 expect "mysql" {send "exit\r"}
-EOF
-
+EOF 
+    if [ -n `yum list installed | grep mysql-community` ]; then
+    	green "【checked】 MySQL安装成功"
+	mysql_status=1
+    fi
 }
 
 install_nginx(){
@@ -136,6 +170,11 @@ install_wp(){
     echo "WordPress服务端配置已完成"
     echo "请打开浏览器访问服务器进行前台配置"
 
+}
+
+show_config(){
+
+    echo
 }
 
 uninstall_wp(){
