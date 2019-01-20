@@ -6,7 +6,6 @@ install_php7(){
     sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
     yum -y install  wget unzip vim tcl expect expect-devel
     echo "安装PHP7"
-    rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
     rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
     yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
     service php-fpm start
