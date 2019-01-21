@@ -150,7 +150,6 @@ green "===================================="
 read ifhttps
 if [ "$ifhttps" = "1" ]; then
     curl https://get.acme.sh | sh
-    source ~/.bashrc 
     while 1
     do
     green "=========="
@@ -174,8 +173,8 @@ if [ "$ifhttps" = "1" ]; then
 	continue
     fi
     done
-    acme.sh  --issue  -d $domain  --webroot /usr/share/nginx/html/
-    acme.sh  --installcert  -d  $domain   \
+    ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /usr/share/nginx/html/
+    ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
         --key-file   /etc/nginx/ssl/$hostname.key \
         --fullchain-file /etc/nginx/ssl/fullchain.cer \
         --reloadcmd  "service nginx force-reload"
