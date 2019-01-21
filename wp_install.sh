@@ -38,7 +38,9 @@ install_php7(){
     chkconfig php-fpm on
     if [ `yum list installed | grep php70 | wc -l` -ne 0 ]; then
     	green "【checked】 PHP7安装成功"
-	sleep 1
+	echo
+	echo
+	sleep 2
 	php_status=1
     fi
 }
@@ -77,7 +79,9 @@ expect "mysql" {send "exit\r"}
 EOF 
     if [ `yum list installed | grep mysql-community | wc -l` -ne 0 ]; then
     	green "【checked】 MySQL安装成功"
-	sleep 1
+	echo
+	echo
+	sleep 2
 	mysql_status=1
     fi
 }
@@ -97,6 +101,8 @@ install_nginx(){
     mkdir /etc/nginx/ssl
     if [ `yum list installed | grep nginx | wc -l` -ne 0 ]; then
     	green "【checked】 nginx安装成功"
+	echo
+	echo
 	sleep 1
 	mysql_status=1
     fi
@@ -237,6 +243,8 @@ config_php(){
     green "===================="
     green "  配置php和php-fpm"
     green "===================="
+    echo
+    echo
     sleep 1
     sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
     sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
@@ -259,6 +267,8 @@ install_wp(){
     green "===================="
     green "   配置wordpress"
     green "===================="
+    echo
+    echo
     sleep 1
     sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
