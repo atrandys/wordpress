@@ -24,18 +24,21 @@ install_php7(){
     green "==============="
     green "  安装必要软件"
     green "==============="
+    sleep 1
     yum -y install epel-release
     sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
     yum -y install  wget unzip vim tcl expect expect-devel
     green "==============="
     green "    安装PHP7"
     green "==============="
+    sleep 1
     rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
     yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
     service php-fpm start
     chkconfig php-fpm on
-    if [ -n `yum list installed | grep php70` ]; then
+    if [ `yum list installed | grep php70 | wc -l` -ne 0 ]; then
     	green "【checked】 PHP7安装成功"
+	sleep 1
 	php_status=1
     fi
 }
@@ -45,6 +48,7 @@ install_mysql(){
     green "==============="
     green "   安装MySQL"
     green "==============="
+    sleep 1
     wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
     rpm -ivh mysql-community-release-el7-5.noarch.rpm
     yum -y install mysql-server
@@ -53,6 +57,7 @@ install_mysql(){
     green "==============="
     green "   配置MySQL"
     green "==============="
+    sleep 1
     mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
     
 /usr/bin/expect << EOF
@@ -70,8 +75,9 @@ expect "Enter password" {send "$mysqlpasswd\r"}
 expect "mysql" {send "create database wordpress_db;\r"}
 expect "mysql" {send "exit\r"}
 EOF 
-    if [ -n `yum list installed | grep mysql-community` ]; then
+    if [ `yum list installed | grep mysql-community | wc -l` -ne 0 ]; then
     	green "【checked】 MySQL安装成功"
+	sleep 1
 	mysql_status=1
     fi
 }
@@ -81,6 +87,7 @@ install_nginx(){
     green "==============="
     green "   安装nginx"
     green "==============="
+    sleep 1
     rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
     yum install -y nginx
     systemctl enable nginx.service
@@ -88,8 +95,9 @@ install_nginx(){
     rm -f /etc/nginx/conf.d/default.conf
     rm -f /etc/nginx/nginx.conf
     mkdir /etc/nginx/ssl
-    if [ -n `yum list installed | grep nginx` ]; then
+    if [ `yum list installed | grep nginx | wc -l` -ne 0 ]; then
     	green "【checked】 nginx安装成功"
+	sleep 1
 	mysql_status=1
     fi
 
@@ -155,6 +163,7 @@ if [ "$ifhttps" = "1" ]; then
 	break
     else
     	red "域名不合规范"
+	sleep 1
 	continue
     fi
     done
@@ -217,6 +226,7 @@ EOF
     break
 else
     red "输入字符不正确，请重新输入"
+    sleep 1
     continue
 fi
 done
@@ -227,6 +237,7 @@ config_php(){
     green "===================="
     green "  配置php和php-fpm"
     green "===================="
+    sleep 1
     sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
     sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
     systemctl restart php-fpm.service
@@ -239,6 +250,7 @@ install_wp(){
     green "===================="
     green "   安装wordpress"
     green "===================="
+    sleep 1
     cd /usr/share/nginx/html
     wget https://cn.wordpress.org/wordpress-5.0.3-zh_CN.zip
     unzip wordpress-5.0.3-zh_CN.zip
@@ -247,6 +259,7 @@ install_wp(){
     green "===================="
     green "   配置wordpress"
     green "===================="
+    sleep 1
     sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
     chown -R nginx /usr/share/nginx/html
