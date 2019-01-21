@@ -149,8 +149,6 @@ green "===================================="
 read ifhttps
 if [ "$ifhttps" = "1" ]; then
     curl https://get.acme.sh | sh
-    while 1
-    do
     green "=========="
     green " 输入域名"
     green "=========="
