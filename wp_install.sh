@@ -76,7 +76,8 @@ spawn mysql -u root -p
 expect "Enter password" {send "$mysqlpasswd\r"}
 expect "mysql" {send "create database wordpress_db;\r"}
 expect "mysql" {send "exit\r"}
-EOF 
+EOF
+
     if [ `yum list installed | grep mysql-community | wc -l` -ne 0 ]; then
     	green "【checked】 MySQL安装成功"
 	echo
