@@ -1,16 +1,16 @@
 #!/bin/bash
  
 function blue(){
-    echo -e "\033[34m $1 \033[0m"
+    echo -e "\033[34m\033[01m $1 \033[0m"
 }
 function green(){
-    echo -e "\033[32m $1 \033[0m"
+    echo -e "\033[32m\033[01m $1 \033[0m"
 }
 function red(){
-    echo -e "\033[31m $1 \033[0m"
+    echo -e "\033[31m\033[01m $1 \033[0m"
 }
 function yellow(){
-    echo -e "\033[33m $1 \033[0m"
+    echo -e "\033[33m\033[01m $1 \033[0m"
 }
 function bred(){
     echo -e "\033[31m\033[01m\033[05m $1 \033[0m"
@@ -78,12 +78,15 @@ EOF
 
 install_nginx(){
 
-    echo "安装nginx"
+    green "==============="
+    green "   安装nginx"
+    green "==============="
     rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
     yum install -y nginx
     systemctl enable nginx.service
     rm -f /etc/nginx/conf.d/default.conf
     rm -f /etc/nginx/nginx.conf
+    mkdir /etc/nginx/ssl
 
 cat > /etc/nginx/nginx.conf <<-EOF
 user  nginx;
@@ -118,7 +121,16 @@ http {
     include /etc/nginx/conf.d/*.conf;
 }
 EOF
-
+    while 1
+    do
+    	green "===================================="
+    	yellow "开启网站https需要域名已经解析到本VPS"
+    	green "是否开启https？是：输入1，否：输入0"
+	green "===================================="
+    	read ifhttps
+    	if [ "$ifhttps" = "1" ]; then
+	
+	elif [ "$ifhttps" = "0" ]; then
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server {
     listen       80;
@@ -141,6 +153,14 @@ server {
     }
 }
 EOF
+break
+	else
+	    red "输入字符不正确，请重新输入"
+	    continue
+	fi
+    done
+    	
+
 
 }
 
@@ -216,7 +236,7 @@ start_menu(){
 	*)
 	clear
 	echo "请输入正确数字"
-	sleep 5s
+	sleep 2s
 	start_menu
 	;;
     esac
