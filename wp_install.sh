@@ -140,6 +140,7 @@ http {
     include /etc/nginx/conf.d/*.conf;
 }
 EOF
+
 while 1
 do
 green "===================================="
@@ -178,6 +179,7 @@ if [ "$ifhttps" = "1" ]; then
         --key-file   /etc/nginx/ssl/$hostname.key \
         --fullchain-file /etc/nginx/ssl/fullchain.cer \
         --reloadcmd  "service nginx force-reload"
+	
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server { 
     listen       80;
@@ -205,8 +207,10 @@ server {
     }
 }
 EOF
+
     break
 elif [ "$ifhttps" = "0" ]; then
+
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server {
     listen       80;
@@ -229,6 +233,7 @@ server {
     }
 }
 EOF
+
     break
 else
     red "输入字符不正确，请重新输入"
