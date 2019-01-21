@@ -141,7 +141,8 @@ http {
 }
 EOF
 
-
+while :
+do
 green "===================================="
 yellow "开启网站https需要域名已经解析到本VPS"
 green "是否开启https？是：输入1，否：输入0"
