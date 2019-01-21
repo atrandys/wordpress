@@ -141,8 +141,7 @@ http {
 }
 EOF
 
-while 1
-do
+
 green "===================================="
 yellow "开启网站https需要域名已经解析到本VPS"
 green "是否开启https？是：输入1，否：输入0"
@@ -156,26 +155,9 @@ if [ "$ifhttps" = "1" ]; then
     green " 输入域名"
     green "=========="
     read domain
-    OLD_IFS="$IFS"
-    IFS="."
-    arr=($domain)
-    IFS="$OLD_IFS"
-    num=${#arr[@]}
-    if [ "$num" -eq "2" ]; then
-    	hostname=${arr[0]}
-	break
-    elif [ "$num" -eq "3" ]; then
-    	hostname=${arr[0]}"."${arr[1]}
-	break
-    else
-    	red "域名不合规范"
-	sleep 1
-	continue
-    fi
-    done
     ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /usr/share/nginx/html/
     ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
-        --key-file   /etc/nginx/ssl/$hostname.key \
+        --key-file   /etc/nginx/ssl/$domain.key \
         --fullchain-file /etc/nginx/ssl/fullchain.cer \
         --reloadcmd  "service nginx force-reload"
 	
@@ -191,7 +173,7 @@ server {
     root /usr/share/nginx/html;
     index index.php index.html;
     ssl_certificate /etc/nginx/ssl/fullchain.cer; 
-    ssl_certificate_key /etc/nginx/ssl/$hostname.key;
+    ssl_certificate_key /etc/nginx/ssl/$domain.key;
     ssl_stapling on;
     ssl_stapling_verify on;
     add_header Strict-Transport-Security "max-age=31536000";
