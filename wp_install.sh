@@ -84,9 +84,14 @@ install_nginx(){
     rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
     yum install -y nginx
     systemctl enable nginx.service
+    systemctl start nginx.service
     rm -f /etc/nginx/conf.d/default.conf
     rm -f /etc/nginx/nginx.conf
     mkdir /etc/nginx/ssl
+    if [ -n `yum list installed | grep nginx` ]; then
+    	green "【checked】 nginx安装成功"
+	mysql_status=1
+    fi
 
 cat > /etc/nginx/nginx.conf <<-EOF
 user  nginx;
@@ -121,16 +126,72 @@ http {
     include /etc/nginx/conf.d/*.conf;
 }
 EOF
+while 1
+do
+green "===================================="
+yellow "开启网站https需要域名已经解析到本VPS"
+green "是否开启https？是：输入1，否：输入0"
+green "===================================="
+read ifhttps
+if [ "$ifhttps" = "1" ]; then
+    curl https://get.acme.sh | sh
+    source ~/.bashrc 
     while 1
     do
-    	green "===================================="
-    	yellow "开启网站https需要域名已经解析到本VPS"
-    	green "是否开启https？是：输入1，否：输入0"
-	green "===================================="
-    	read ifhttps
-    	if [ "$ifhttps" = "1" ]; then
-	
-	elif [ "$ifhttps" = "0" ]; then
+    green "=========="
+    green " 输入域名"
+    green "=========="
+    read domain
+    OLD_IFS="$IFS"
+    IFS="."
+    arr=($domain)
+    IFS="$OLD_IFS"
+    num=${#arr[@]}
+    if [ "$num" -eq "2" ]; then
+    	hostname=${arr[0]}
+	break
+    elif [ "$num" -eq "3" ]; then
+    	hostname=${arr[0]}"."${arr[1]}
+	break
+    else
+    	red "域名不合规范"
+	continue
+    fi
+    done
+    acme.sh  --issue  -d $domain  --webroot /usr/share/nginx/html/
+    acme.sh  --installcert  -d  $domain   \
+        --key-file   /etc/nginx/ssl/$hostname.key \
+        --fullchain-file /etc/nginx/ssl/fullchain.cer \
+        --reloadcmd  "service nginx force-reload"
+cat > /etc/nginx/conf.d/default.conf<<-EOF
+server { 
+    listen       80;
+    server_name  $domain;
+    rewrite ^(.*)$  https://\$host\$1 permanent; 
+}
+server {
+    listen 443 ssl http2;
+    server_name $domain;
+    root /usr/share/nginx/html;
+    index index.php index.html;
+    ssl_certificate /etc/nginx/ssl/fullchain.cer; 
+    ssl_certificate_key /etc/nginx/ssl/$hostname.key;
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    add_header Strict-Transport-Security "max-age=31536000";
+    access_log /var/log/nginx/hostscube.log combined;
+    location ~ \.php$ {
+    	fastcgi_pass 127.0.0.1:9000;
+    	fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+    	include fastcgi_params;
+    }
+    location / {
+       try_files \$uri \$uri/ /index.php?\$args;
+    }
+}
+EOF
+    break
+elif [ "$ifhttps" = "0" ]; then
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server {
     listen       80;
@@ -153,70 +214,71 @@ server {
     }
 }
 EOF
-break
-	else
-	    red "输入字符不正确，请重新输入"
-	    continue
-	fi
-    done
-    	
-
-
+    break
+else
+    red "输入字符不正确，请重新输入"
+    continue
+fi
+done
 }
 
 config_php(){
 
-    echo "配置php和php-fpm"
+    green "===================="
+    green "  配置php和php-fpm"
+    green "===================="
     sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
     sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
     systemctl restart php-fpm.service
-    systemctl start nginx.service
+    systemctl restart nginx.service
 
 }
 
 install_wp(){
 
-    echo "安装WordPress"
+    green "===================="
+    green "   安装wordpress"
+    green "===================="
     cd /usr/share/nginx/html
-    wget https://cn.wordpress.org/wordpress-4.9.4-zh_CN.zip
-    unzip wordpress-4.9.4-zh_CN.zip
+    wget https://cn.wordpress.org/wordpress-5.0.3-zh_CN.zip
+    unzip wordpress-5.0.3-zh_CN.zip
     mv wordpress/* ./
     cp wp-config-sample.php wp-config.php
-    echo "配置参数"
+    green "===================="
+    green "   配置wordpress"
+    green "===================="
     sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
     chown -R nginx /usr/share/nginx/html
-    echo "=========================="
-    echo "WordPress服务端配置已完成"
-    echo "请打开浏览器访问服务器进行前台配置"
-
-}
-
-show_config(){
-
-    echo
+    green "========================================================"
+    green "WordPress服务端配置已完成，请打开浏览器访问服务器进行前台配置"
+    yellow "请保存好mysql数据库密码"
+    green "用户名：root  密码：$mysqlpasswd"
+    green "========================================================"
 }
 
 uninstall_wp(){
-
-    echo "你的wordpress数据将全部丢失！！你确定要卸载吗？"
+    red "============================================="
+    red "你的wordpress数据将全部丢失！！你确定要卸载吗？"
     read -s -n1 -p "按回车键开始卸载，按ctrl+c取消"
     yum remove -y php70w php70w-mysql php70w-gd php70w-xml php70w-fpm mysql-server nginx
     rm -rf /usr/share/nginx/html/*
-    echo "卸载完成"
+    green "=========="
+    green " 卸载完成"
+    green "=========="
 }
 
 start_menu(){
     clear
-    echo "======================================="
-    echo " 介绍：适用于CentOS7，一键安装wordpress"
-    echo " 作者：atrandys"
-    echo " 网站：www.atrandys.com"
-    echo " Youtube：atrandys"
-    echo "======================================="
-    echo "1. 一键安装wordpress"
-    echo "2. 卸载wordpress"
-    echo "0. 退出脚本"
+    green "======================================="
+    green " 介绍：适用于CentOS7，一键安装wordpress"
+    green " 作者：atrandys"
+    green " 网站：www.atrandys.com"
+    green " Youtube：atrandys"
+    green "======================================="
+    green "1. 一键安装wordpress"
+    red "2. 卸载wordpress"
+    yellow "0. 退出脚本"
     echo
     read -p "请输入数字:" num
     case "$num" in
