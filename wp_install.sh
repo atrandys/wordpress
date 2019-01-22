@@ -19,6 +19,20 @@ function byellow(){
     echo -e "\033[33m\033[01m\033[05m $1 \033[0m"
 }
 
+#判断系统
+if [ ! -e '/etc/redhat-release' ]; then
+red "==============="
+red " 仅支持CentOS7"
+red "==============="
+exit
+fi
+if  [ -n "$(grep ' 6\.' /etc/redhat-release)" ] ;then
+red "==============="
+red " 仅支持CentOS7"
+red "==============="
+exit
+fi
+
 install_php7(){
 
     green "==============="
