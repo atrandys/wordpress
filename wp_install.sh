@@ -70,6 +70,13 @@ install_mysql(){
     yum -y install mysql-server
     systemctl enable mysqld.service
     systemctl start  mysqld.service
+    if [ `yum list installed | grep mysql-community | wc -l` -ne 0 ]; then
+    	green "【checked】 MySQL安装成功"
+	echo
+	echo
+	sleep 2
+	mysql_status=1
+    fi
     green "==============="
     green "   配置MySQL"
     green "==============="
@@ -92,13 +99,7 @@ expect "mysql" {send "create database wordpress_db;\r"}
 expect "mysql" {send "exit\r"}
 EOF
 
-    if [ `yum list installed | grep mysql-community | wc -l` -ne 0 ]; then
-    	green "【checked】 MySQL安装成功"
-	echo
-	echo
-	sleep 2
-	mysql_status=1
-    fi
+
 }
 
 install_nginx(){
@@ -273,11 +274,11 @@ install_wp(){
     sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
     chown -R nginx /usr/share/nginx/html
-    green "========================================================"
-    green "WordPress服务端配置已完成，请打开浏览器访问服务器进行前台配置"
-    yellow "请保存好mysql数据库密码"
-    green "用户名：root  密码：$mysqlpasswd"
-    green "========================================================"
+    green "==========================================================="
+    green " WordPress服务端配置已完成，请打开浏览器访问服务器进行前台配置"
+    yellow " 请保存好mysql数据库密码"
+    green " 用户名：root  密码：$mysqlpasswd"
+    green "==========================================================="
 }
 
 uninstall_wp(){
