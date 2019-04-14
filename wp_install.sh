@@ -33,6 +33,9 @@ red "==============="
 exit
 fi
 
+systemctl stop firewalld
+systemctl disable firewalld
+
 install_php7(){
 
     green "==============="
