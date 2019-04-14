@@ -285,7 +285,7 @@ uninstall_wp(){
     red "============================================="
     red "你的wordpress数据将全部丢失！！你确定要卸载吗？"
     read -s -n1 -p "按回车键开始卸载，按ctrl+c取消"
-    yum remove -y php70w php70w-mysql php70w-gd php70w-xml php70w-fpm mysql-server nginx
+    yum remove -y php70w php70w-mysql php70w-gd php70w-xml php70w-fpm mysql nginx
     rm -rf /usr/share/nginx/html/*
     green "=========="
     green " 卸载完成"
