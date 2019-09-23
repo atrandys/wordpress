@@ -128,7 +128,7 @@ install_nginx(){
     fi
 
     green "=========="
-    green " 输入域名"
+    green " 输入域名，例如jiasu.ga"
     green "=========="
     read domain
     
@@ -183,8 +183,8 @@ green "===================================="
 read ifhttps
 if [ "$ifhttps" = "1" ]; then
     curl https://get.acme.sh | sh
-    ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /usr/share/nginx/html/
-    ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
+    ~/.acme.sh/acme.sh  --issue  -d $domain -d *.$domain --webroot /usr/share/nginx/html/
+    ~/.acme.sh/acme.sh  --installcert  -d  $domain  -d  *.$domain \
         --key-file   /etc/nginx/ssl/$domain.key \
         --fullchain-file /etc/nginx/ssl/fullchain.cer \
         --reloadcmd  "service nginx force-reload"
@@ -192,12 +192,12 @@ if [ "$ifhttps" = "1" ]; then
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server { 
     listen       80;
-    server_name  $domain;
+    server_name  $domain www.$domain;
     rewrite ^(.*)$  https://\$host\$1 permanent; 
 }
 server {
     listen 443 ssl http2;
-    server_name $domain;
+    server_name $domain www.$domain;
     root /usr/share/nginx/html;
     index index.php index.html;
     ssl_certificate /etc/nginx/ssl/fullchain.cer; 
