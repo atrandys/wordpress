@@ -188,7 +188,7 @@ server {
 server {
     listen 443 ssl http2;
     server_name $domain;
-    root /usr/share/nginx/html;
+    root /etc/nginx/html;
     index index.php index.html;
     ssl_certificate /etc/nginx/ssl/fullchain.cer; 
     ssl_certificate_key /etc/nginx/ssl/$domain.key;
@@ -251,7 +251,7 @@ config_php(){
     echo
     sleep 1
     sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
-    sed -i "s/user = apache/user = nginx/;s/group = apache/group = nginx/;s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
+    sed -i "s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
     systemctl restart php-fpm.service
     systemctl restart nginx.service
 
