@@ -20,6 +20,7 @@ function byellow(){
 }
 
 #判断系统
+check_os(){
 if [ ! -e '/etc/redhat-release' ]; then
 red "==============="
 red " 仅支持CentOS7"
@@ -32,6 +33,13 @@ red " 仅支持CentOS7"
 red "==============="
 exit
 fi
+if  [ -n "$(grep ' 7\.' /etc/redhat-release)" ] ;then
+red "==============="
+red " 仅支持CentOS7"
+red "==============="
+exit
+fi
+}
 
 disable_selinux(){
 
@@ -56,9 +64,9 @@ check_domain(){
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ] ; then
-    	green "=========================================="
-	green "域名解析正常，开启安装nginx并申请https证书"
-	green "=========================================="
+    	green "============================="
+	green "域名解析正常，开始安装wordpress"
+	green "============================="
 	sleep 1s
 	install_php7
     	install_mysql
@@ -76,21 +84,24 @@ check_domain(){
 install_php7(){
 
     green "==============="
-    green "  安装必要软件"
+    green " 1.安装必要软件"
     green "==============="
     sleep 1
     yum -y install epel-release
     sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
     yum -y install  wget unzip vim tcl expect curl
-    green "==============="
-    green "    安装PHP7"
-    green "==============="
+    echo
+    echo
+    green "=========="
+    green "2.安装PHP7"
+    green "=========="
     sleep 1
     rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
     yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
     service php-fpm start
     chkconfig php-fpm on
     if [ `yum list installed | grep php70 | wc -l` -ne 0 ]; then
+        echo
     	green "【checked】 PHP7安装成功"
 	echo
 	echo
@@ -102,7 +113,7 @@ install_php7(){
 install_mysql(){
 
     green "==============="
-    green "   安装MySQL"
+    green "  3.安装MySQL"
     green "==============="
     sleep 1
     wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
@@ -117,8 +128,10 @@ install_mysql(){
 	sleep 2
 	mysql_status=1
     fi
+    echo
+    echo
     green "==============="
-    green "   配置MySQL"
+    green "  4.配置MySQL"
     green "==============="
     sleep 1
     mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
@@ -145,7 +158,7 @@ EOF
 install_nginx(){
 
     green "==============="
-    green "   安装nginx"
+    green "  5.安装nginx"
     green "==============="
     sleep 1
     rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
@@ -237,7 +250,7 @@ EOF
 config_php(){
 
     green "===================="
-    green "  配置php和php-fpm"
+    green " 6.配置php和php-fpm"
     green "===================="
     echo
     echo
@@ -252,8 +265,10 @@ config_php(){
 install_wp(){
 
     green "===================="
-    green "   安装wordpress"
+    green "  7.安装wordpress"
     green "===================="
+    echo
+    echo
     sleep 1
     cd /usr/share/nginx/html
     wget https://cn.wordpress.org/latest-zh_CN.zip
@@ -261,7 +276,7 @@ install_wp(){
     mv wordpress/* ./
     cp wp-config-sample.php wp-config.php
     green "===================="
-    green "   配置wordpress"
+    green "  8.配置wordpress"
     green "===================="
     echo
     echo
@@ -270,9 +285,8 @@ install_wp(){
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
     chown -R nginx /usr/share/nginx/html
     green "==========================================================="
-    green " WordPress服务端配置已完成，请打开浏览器访问服务器进行前台配置"
-    yellow " 请保存好mysql数据库密码"
-    green " 用户名：root  密码：$mysqlpasswd"
+    green " WordPress服务端配置已完成，请打开浏览器访问您的域名进行前台配置"
+    green " 数据库密码等信息参考文件：/usr/share/nginx/html/wp-config.php"
     green "==========================================================="
 }
 
@@ -295,7 +309,7 @@ start_menu(){
     green " 介绍：适用于CentOS7，一键安装wordpress"
     green " 作者：atrandys"
     green " 网站：www.atrandys.com"
-    green " Youtube：atrandys"
+    green " Youtube：Randy's 堡垒"
     green "======================================="
     green "1. 一键安装wordpress"
     red "2. 卸载wordpress"
@@ -304,6 +318,7 @@ start_menu(){
     read -p "请输入数字:" num
     case "$num" in
     	1)
+	check_os
 	disable_selinux
         check_domain
 	;;
