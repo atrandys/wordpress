@@ -54,7 +54,7 @@ check_domain(){
     green "======================="
     read your_domain
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
-    ocal_addr=`curl ipv4.icanhazip.com`
+    local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ] ; then
 	install_php7
     	install_mysql
