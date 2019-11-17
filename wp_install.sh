@@ -213,7 +213,7 @@ server {
 server {
     listen 443 ssl http2;
     server_name $your_domain;
-    root /etc/nginx/html;
+    root /usr/share/nginx/html;
     index index.php index.html;
     ssl_certificate /etc/nginx/ssl/fullchain.cer; 
     ssl_certificate_key /etc/nginx/ssl/$your_domain.key;
