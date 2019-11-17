@@ -46,10 +46,6 @@ disable_selinux(){
          sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
          setenforce 0
     fi
- 
-    if [ "$CHECK" == "SELINUX=disabled" ]; then
-          exit
-    fi
 }
 
 check_domain(){
