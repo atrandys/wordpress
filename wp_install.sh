@@ -56,6 +56,10 @@ check_domain(){
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ] ; then
+    	green "=========================================="
+	green "域名解析正常，开启安装nginx并申请https证书"
+	green "=========================================="
+	sleep 1s
 	install_php7
     	install_mysql
     	install_nginx
@@ -279,6 +283,7 @@ uninstall_wp(){
     yum remove -y php70w php70w-mysql php70w-gd php70w-xml php70w-fpm mysql nginx
     rm -rf /usr/share/nginx/html/*
     rm -rf /var/lib/mysql
+    rm -rf /usr/share/mysql
     green "=========="
     green " 卸载完成"
     green "=========="
