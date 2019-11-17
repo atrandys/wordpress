@@ -33,8 +33,45 @@ red "==============="
 exit
 fi
 
-systemctl stop firewalld
-systemctl disable firewalld
+disable_selinux(){
+
+    systemctl stop firewalld
+    systemctl disable firewalld
+    CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
+    if [ "$CHECK" == "SELINUX=enforcing" ]; then
+        sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+        setenforce 0
+    fi
+    if [ "$CHECK" == "SELINUX=permissive" ]; then
+         sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
+         setenforce 0
+    fi
+ 
+    if [ "$CHECK" == "SELINUX=disabled" ]; then
+          exit
+    fi
+}
+
+check_domain(){
+    green "======================="
+    yellow "请输入绑定到本VPS的域名"
+    green "======================="
+    read your_domain
+    real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
+    ocal_addr=`curl ipv4.icanhazip.com`
+    if [ $real_addr == $local_addr ] ; then
+	install_php7
+    	install_mysql
+    	install_nginx
+	config_php
+    	install_wp
+    else
+        red "================================"
+	red "域名解析地址与本VPS IP地址不一致"
+	red "本次安装失败，请确保域名解析正常"
+	red "================================"
+    fi
+}
 
 install_php7(){
 
@@ -44,7 +81,7 @@ install_php7(){
     sleep 1
     yum -y install epel-release
     sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
-    yum -y install  wget unzip vim tcl expect expect-devel
+    yum -y install  wget unzip vim tcl expect expect-devel curl
     green "==============="
     green "    安装PHP7"
     green "==============="
@@ -160,38 +197,26 @@ http {
 }
 EOF
 
-while :
-do
-green "===================================="
-yellow "开启网站https需要域名已经解析到本VPS"
-green "是否开启https？是：输入1，否：输入0"
-green "===================================="
-read ifhttps
-if [ "$ifhttps" = "1" ]; then
     curl https://get.acme.sh | sh
-    green "=========="
-    green " 输入域名"
-    green "=========="
-    read domain
-    ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /usr/share/nginx/html/
-    ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
-        --key-file   /etc/nginx/ssl/$domain.key \
+    ~/.acme.sh/acme.sh  --issue  -d $your_domain  --webroot /usr/share/nginx/html/
+    ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
+        --key-file   /etc/nginx/ssl/$your_domain.key \
         --fullchain-file /etc/nginx/ssl/fullchain.cer \
         --reloadcmd  "service nginx force-reload"
 	
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server { 
     listen       80;
-    server_name  $domain;
+    server_name  $your_domain;
     rewrite ^(.*)$  https://\$host\$1 permanent; 
 }
 server {
     listen 443 ssl http2;
-    server_name $domain;
+    server_name $your_domain;
     root /etc/nginx/html;
     index index.php index.html;
     ssl_certificate /etc/nginx/ssl/fullchain.cer; 
-    ssl_certificate_key /etc/nginx/ssl/$domain.key;
+    ssl_certificate_key /etc/nginx/ssl/$your_domain.key;
     ssl_stapling on;
     ssl_stapling_verify on;
     add_header Strict-Transport-Security "max-age=31536000";
@@ -207,39 +232,6 @@ server {
 }
 EOF
 
-    break
-elif [ "$ifhttps" = "0" ]; then
-
-cat > /etc/nginx/conf.d/default.conf<<-EOF
-server {
-    listen       80;
-    server_name  localhost;
-    root /usr/share/nginx/html;
-    index index.php index.html index.htm;
-    location / {
-        try_files \$uri \$uri/ /index.php?\$args;
-    }
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   /usr/share/nginx/html;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass   127.0.0.1:9000;
-        fastcgi_index  index.php;
-        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-        include        fastcgi_params;
-    }
-}
-EOF
-
-    break
-else
-    red "输入字符不正确，请重新输入"
-    sleep 1
-    continue
-fi
-done
 }
 
 config_php(){
@@ -264,8 +256,8 @@ install_wp(){
     green "===================="
     sleep 1
     cd /usr/share/nginx/html
-    wget https://cn.wordpress.org/wordpress-5.0.3-zh_CN.zip
-    unzip wordpress-5.0.3-zh_CN.zip
+    wget https://cn.wordpress.org/latest-zh_CN.zip
+    unzip latest-zh_CN.zip
     mv wordpress/* ./
     cp wp-config-sample.php wp-config.php
     green "===================="
@@ -311,11 +303,8 @@ start_menu(){
     read -p "请输入数字:" num
     case "$num" in
     	1)
-	install_php7
-    	install_mysql
-    	install_nginx
-	config_php
-    	install_wp
+	disable_selinux
+        check_domain
 	;;
 	2)
 	uninstall_wp
