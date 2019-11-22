@@ -33,7 +33,7 @@ red " 仅支持CentOS7"
 red "==============="
 exit
 fi
-if  [ -n "$(grep ' 7\.' /etc/redhat-release)" ] ;then
+if  [ -n "$(grep ' 8\.' /etc/redhat-release)" ] ;then
 red "==============="
 red " 仅支持CentOS7"
 red "==============="
