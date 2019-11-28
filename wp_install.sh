@@ -134,7 +134,7 @@ install_mysql(){
     green "==============="
     green "  4.配置MySQL"
     green "==============="
-    sleep 1
+    sleep 2
     mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
     
 /usr/bin/expect << EOF
@@ -157,7 +157,8 @@ EOF
 }
 
 install_nginx(){
-
+    echo
+    echo
     green "==============="
     green "  5.安装nginx"
     green "==============="
@@ -170,7 +171,8 @@ install_nginx(){
     rm -f /etc/nginx/nginx.conf
     mkdir /etc/nginx/ssl
     if [ `yum list installed | grep nginx | wc -l` -ne 0 ]; then
-    	green "【checked】 nginx安装成功"
+    	echo
+	green "【checked】 nginx安装成功"
 	echo
 	echo
 	sleep 1
@@ -250,6 +252,7 @@ EOF
 
 config_php(){
 
+    echo
     green "===================="
     green " 6.配置php和php-fpm"
     green "===================="
