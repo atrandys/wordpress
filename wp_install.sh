@@ -68,6 +68,7 @@ check_domain(){
 	green "域名解析正常，开始安装wordpress"
 	green "============================="
 	sleep 1s
+	download_wp
 	install_php7
     	install_mysql
     	install_nginx
@@ -262,6 +263,22 @@ config_php(){
 
 }
 
+
+download_wp(){
+
+    mkdir /usr/share/wordpresstemp
+    cd /usr/share/wordpresstemp/
+    wget https://cn.wordpress.org/latest-zh_CN.zip
+    if [ ! -f "/usr/share/wordpresstemp/latest-zh_CN.zip" ]; then
+    	red "从cn官网下载wordpress失败，尝试从github下载……"
+	wget https://github.com/atrandys/wordpress/raw/master/latest-zh_CN.zip    
+    fi
+    if [ ! -f "/usr/share/wordpresstemp/latest-zh_CN.zip" ]; then
+	red "我它喵的从github下载wordpress也失败了，再见，请尝试手动安装……"
+	exit 1
+    fi
+}
+
 install_wp(){
 
     green "===================="
@@ -271,15 +288,7 @@ install_wp(){
     echo
     sleep 1
     cd /usr/share/nginx/html
-    wget https://cn.wordpress.org/latest-zh_CN.zip
-    if [ ! -f "/usr/share/ngix/html/latest-zh_CN.zip" ]; then
-    	red "从cn官网下载wordpress失败，尝试从github下载……"
-	wget https://github.com/atrandys/wordpress/raw/master/latest-zh_CN.zip    
-    fi
-    if [ ! -f "/usr/share/ngix/html/latest-zh_CN.zip" ]; then
-	red "我它喵的从github下载wordpress也失败了，请尝试手动安装……"
-	exit 1
-    fi
+    mv /usr/share/wordpresstemp/latest-zh_CN.zip ./
     unzip latest-zh_CN.zip
     mv wordpress/* ./
     cp wp-config-sample.php wp-config.php
