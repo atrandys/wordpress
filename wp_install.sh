@@ -272,6 +272,14 @@ install_wp(){
     sleep 1
     cd /usr/share/nginx/html
     wget https://cn.wordpress.org/latest-zh_CN.zip
+    if [ ! -f "/usr/share/ngix/html/latest-zh_CN.zip" ]; then
+    	red "从cn官网下载wordpress失败，尝试从github下载……"
+	wget https://github.com/atrandys/wordpress/releases/download/latest/latest-zh_CN.zip    
+    fi
+    if [ ! -f "/usr/share/ngix/html/latest-zh_CN.zip" ]; then
+	red "我它喵的从github下载wordpress也失败了，请尝试手动安装……"
+	exit 1
+    fi
     unzip latest-zh_CN.zip
     mv wordpress/* ./
     cp wp-config-sample.php wp-config.php
