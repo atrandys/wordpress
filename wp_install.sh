@@ -303,7 +303,7 @@ install_wp(){
     sleep 1
     sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
-    chown -R nginx /usr/share/nginx/html
+    chown -R nginx.root /usr/share/nginx/html/
     green "==========================================================="
     green " WordPress服务端配置已完成，请打开浏览器访问您的域名进行前台配置"
     green " 数据库密码等信息参考文件：/usr/share/nginx/html/wp-config.php"
