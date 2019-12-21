@@ -221,6 +221,19 @@ EOF
         --reloadcmd  "service nginx force-reload"
 	
 cat > /etc/nginx/conf.d/default.conf<<-EOF
+server {
+    listen 80 default_server;
+    server_name _;
+    return 404;  
+}
+server {
+    listen 443 ssl default_server;
+    server_name _;
+    ssl_certificate /etc/nginx/ssl/fullchain.cer; 
+    ssl_certificate_key /etc/nginx/ssl/$your_domain.key;
+    return 404;
+}
+
 server { 
     listen       80;
     server_name  $your_domain;
