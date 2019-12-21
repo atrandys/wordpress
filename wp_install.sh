@@ -291,7 +291,7 @@ download_wp(){
     fi
     if [ ! -f "/usr/share/wordpresstemp/latest-zh_CN.zip" ]; then
 	red "我它喵的从github下载wordpress也失败了，请尝试手动安装……"
-	grenn "从wordpress官网下载包然后命名为latest-zh_CN.zip，新建目录/usr/share/wordpresstemp/，上传到此目录下即可"
+	green "从wordpress官网下载包然后命名为latest-zh_CN.zip，新建目录/usr/share/wordpresstemp/，上传到此目录下即可"
 	exit 1
     fi
 }
