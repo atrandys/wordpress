@@ -87,7 +87,7 @@ install_php7(){
     sleep 1
     yum -y install epel-release
     sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
-    yum -y install  wget unzip vim tcl expect curl
+    yum -y install  wget unzip vim tcl expect curl socat
     echo
     echo
     green "=========="
