@@ -46,13 +46,9 @@ disable_selinux(){
     systemctl stop firewalld
     systemctl disable firewalld
     CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
-    if [ "$CHECK" == "SELINUX=enforcing" ]; then
-        sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
-        setenforce 0
-    fi
-    if [ "$CHECK" == "SELINUX=permissive" ]; then
-         sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
-         setenforce 0
+    if [ "$CHECK" != "SELINUX=disabled" ]; then
+        semanage port -a -t http_port_t -p tcp 80
+        semanage port -a -t http_port_t -p tcp 443
     fi
 }
 
@@ -79,6 +75,7 @@ check_domain(){
 	red "域名解析地址与本VPS IP地址不一致"
 	red "本次安装失败，请确保域名解析正常"
 	red "================================"
+	exit 1
     fi
 }
 
@@ -166,7 +163,7 @@ install_nginx(){
     rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
     yum install -y nginx
     systemctl enable nginx.service
-    systemctl start nginx.service
+    systemctl stop nginx.service
     rm -f /etc/nginx/conf.d/default.conf
     rm -f /etc/nginx/nginx.conf
     mkdir /etc/nginx/ssl
@@ -214,11 +211,10 @@ http {
 EOF
 
     curl https://get.acme.sh | sh
-    ~/.acme.sh/acme.sh  --issue  -d $your_domain  --nginx
+    ~/.acme.sh/acme.sh  --issue  -d $your_domain  --standalone
     ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
         --key-file   /etc/nginx/ssl/$your_domain.key \
-        --fullchain-file /etc/nginx/ssl/fullchain.cer \
-        --reloadcmd  "service nginx force-reload"
+        --fullchain-file /etc/nginx/ssl/fullchain.cer
 	
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server {
@@ -317,7 +313,7 @@ install_wp(){
     sleep 1
     sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
-    chown -R nginx /usr/share/nginx/html/
+    chown -R nginx:root /usr/share/nginx/html/
     chmod -R 777 /usr/share/nginx/html/wp-content
     green "==========================================================="
     green " WordPress服务端配置已完成，请打开浏览器访问您的域名进行前台配置"
