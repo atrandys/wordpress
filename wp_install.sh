@@ -87,7 +87,7 @@ install_php7(){
     sleep 1
     yum -y install epel-release
     sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
-    yum -y install  wget unzip vim tcl expect curl socat
+    yum -y install  unzip vim tcl expect curl socat
     echo
     echo
     green "=========="
@@ -278,6 +278,7 @@ config_php(){
 
 download_wp(){
 
+    yum -y install  wget
     mkdir /usr/share/wordpresstemp
     cd /usr/share/wordpresstemp/
     wget https://cn.wordpress.org/latest-zh_CN.zip
