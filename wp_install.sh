@@ -272,6 +272,11 @@ config_php(){
     sed -i "s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
     systemctl restart php-fpm.service
     systemctl restart nginx.service
+    ~/.acme.sh/acme.sh  --issue --force  -d $your_domain  --nginx
+    ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
+        --key-file   /etc/nginx/ssl/$your_domain.key \
+        --fullchain-file /etc/nginx/ssl/fullchain.cer \
+	--reloadcmd  "systemctl restart nginx"	
 
 }
 
