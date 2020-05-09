@@ -43,13 +43,39 @@ fi
 
 disable_selinux(){
 
-    systemctl stop firewalld
-    systemctl disable firewalld
+yum -y install net-tools socat
+Port80=`netstat -tlpn | awk -F '[: ]+' '$1=="tcp"{print $5}' | grep -w 80`
+Port443=`netstat -tlpn | awk -F '[: ]+' '$1=="tcp"{print $5}' | grep -w 443`
+if [ -n "$Port80" ]; then
+    process80=`netstat -tlpn | awk -F '[: ]+' '$5=="80"{print $9}'`
+    red "==========================================================="
+    red "检测到80端口被占用，占用进程为：${process80}，本次安装结束"
+    red "==========================================================="
+    exit 1
+fi
+if [ -n "$Port443" ]; then
+    process443=`netstat -tlpn | awk -F '[: ]+' '$5=="443"{print $9}'`
+    red "============================================================="
+    red "检测到443端口被占用，占用进程为：${process443}，本次安装结束"
+    red "============================================================="
+    exit 1
+fi
+if [ -f "/etc/selinux/config" ]; then
     CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
     if [ "$CHECK" != "SELINUX=disabled" ]; then
-        semanage port -a -t http_port_t -p tcp 80
-        semanage port -a -t http_port_t -p tcp 443
+        green "检测到SELinux开启状态，添加放行80/443端口规则"
+        yum install -y policycoreutils-python >/dev/null 2>&1
+        semanage port -m -t http_port_t -p tcp 80
+        semanage port -m -t http_port_t -p tcp 443
     fi
+fi
+firewall_status=`systemctl status firewalld | grep "Active: active"`
+if [ -n "$firewall_status" ]; then
+    green "检测到firewalld开启状态，添加放行80/443端口规则"
+    firewall-cmd --zone=public --add-port=80/tcp --permanent
+    firewall-cmd --zone=public --add-port=443/tcp --permanent
+    firewall-cmd --reload
+fi
 }
 
 check_domain(){
@@ -332,7 +358,7 @@ uninstall_wp(){
     red "============================================="
     red "你的wordpress数据将全部丢失！！你确定要卸载吗？"
     read -s -n1 -p "按回车键开始卸载，按ctrl+c取消"
-    yum remove -y php70w php70w-mysql php70w-gd php70w-xml php70w-fpm mysql nginx
+    yum remove -y php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd mysql nginx
     rm -rf /usr/share/nginx/html/*
     rm -rf /var/lib/mysql
     rm -rf /usr/share/mysql
