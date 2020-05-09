@@ -99,7 +99,7 @@ install_php7(){
     yum -y install php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd
     service php-fpm start
     chkconfig php-fpm on
-    if [ `yum list installed | grep php70 | wc -l` -ne 0 ]; then
+    if [ `yum list installed | grep php74 | wc -l` -ne 0 ]; then
         echo
     	green "【checked】 PHP7安装成功"
 	echo
