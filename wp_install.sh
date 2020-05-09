@@ -97,8 +97,8 @@ install_php7(){
     green "=========="
     sleep 1
     yum -y install php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd
-    service php-fpm start
-    chkconfig php-fpm on
+    service php74-php-fpm start
+    chkconfig php74-php-fpm on
     if [ `yum list installed | grep php74 | wc -l` -ne 0 ]; then
         echo
     	green "【checked】 PHP7安装成功"
@@ -269,9 +269,9 @@ config_php(){
     echo
     echo
     sleep 1
-    sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
-    sed -i "s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
-    systemctl restart php-fpm.service
+    sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/opt/remi/php74/php.ini
+    sed -i "s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/opt/remi/php74/php-fpm.d/www.conf
+    systemctl restart php74-php-fpm.service
     systemctl restart nginx.service
     ~/.acme.sh/acme.sh  --issue --force  -d $your_domain  --nginx
     ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
