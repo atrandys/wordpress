@@ -85,8 +85,10 @@ install_php7(){
     green " 1.安装必要软件"
     green "==============="
     sleep 1
-    yum -y install epel-release
-    sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
+    wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    wget https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm
+    #sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
     yum -y install  unzip vim tcl expect curl socat
     echo
     echo
@@ -94,8 +96,7 @@ install_php7(){
     green "2.安装PHP7"
     green "=========="
     sleep 1
-    rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
-    yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
+    yum -y install php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd
     service php-fpm start
     chkconfig php-fpm on
     if [ `yum list installed | grep php70 | wc -l` -ne 0 ]; then
