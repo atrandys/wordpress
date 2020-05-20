@@ -118,9 +118,9 @@ install_php7(){
     yum -y install  unzip vim tcl expect curl socat
     echo
     echo
-    green "=========="
-    green "2.安装PHP7"
-    green "=========="
+    green "============"
+    green "2.安装PHP7.4"
+    green "============"
     sleep 1
     yum -y install php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd
     service php74-php-fpm start
