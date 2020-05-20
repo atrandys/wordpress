@@ -87,21 +87,21 @@ check_domain(){
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ] ; then
     	green "============================="
-	green "域名解析正常，开始安装wordpress"
-	green "============================="
-	sleep 1s
-	download_wp
-	install_php7
-    	install_mysql
-    	install_nginx
-	config_php
-    	install_wp
+	    green "域名解析正常，开始安装wordpress"
+	    green "============================="
+	    sleep 1s
+	    download_wp
+	    install_php7
+        install_mysql
+        install_nginx
+	    config_php
+        install_wp
     else
         red "================================"
-	red "域名解析地址与本VPS IP地址不一致"
-	red "本次安装失败，请确保域名解析正常"
-	red "================================"
-	exit 1
+	    red "域名解析地址与本VPS IP地址不一致"
+	    red "本次安装失败，请确保域名解析正常"
+	    red "================================"
+	    exit 1
     fi
 }
 
@@ -128,10 +128,10 @@ install_php7(){
     if [ `yum list installed | grep php74 | wc -l` -ne 0 ]; then
         echo
     	green "【checked】 PHP7安装成功"
-	echo
-	echo
-	sleep 2
-	php_status=1
+	    echo
+	    echo
+	    sleep 2
+	    php_status=1
     fi
 }
 
@@ -141,17 +141,18 @@ install_mysql(){
     green "  3.安装MySQL"
     green "==============="
     sleep 1
-    wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
-    rpm -ivh mysql-community-release-el7-5.noarch.rpm
+    #wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+	wget https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+    rpm -ivh mysql80-community-release-el7-3.noarch.rpm
     yum -y install mysql-server
     systemctl enable mysqld.service
     systemctl start  mysqld.service
     if [ `yum list installed | grep mysql-community | wc -l` -ne 0 ]; then
     	green "【checked】 MySQL安装成功"
-	echo
-	echo
-	sleep 2
-	mysql_status=1
+	    echo
+	    echo
+	    sleep 2
+	    mysql_status=1
     fi
     echo
     echo
@@ -159,23 +160,20 @@ install_mysql(){
     green "  4.配置MySQL"
     green "==============="
     sleep 2
-    mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
-    
-/usr/bin/expect << EOF
-spawn mysql_secure_installation
-expect "password for root" {send "\r"}
-expect "root password" {send "Y\r"}
-expect "New password" {send "$mysqlpasswd\r"}
-expect "Re-enter new password" {send "$mysqlpasswd\r"}
-expect "Remove anonymous users" {send "Y\r"}
-expect "Disallow root login remotely" {send "Y\r"}
-expect "database and access" {send "Y\r"}
-expect "Reload privilege tables" {send "Y\r"}
-spawn mysql -u root -p
-expect "Enter password" {send "$mysqlpasswd\r"}
-expect "mysql" {send "create database wordpress_db;\r"}
-expect "mysql" {send "exit\r"}
-EOF
+	originpasswd=`cat /var/log/mysqld.log | grep password | head -1 | rev  | cut -d ' ' -f 1 | rev`
+    mysqlpasswd=`mkpasswd -l 18 -d 2 -c 3 -C 4 -s 5 | sed $'s/[\'\"]//g'`
+cat > ~/.my.cnf <<EOT
+[mysql]
+user=root
+password="$originpasswd"
+EOT
+    mysql  --connect-expired-password  -e "alter user 'root'@'localhost' identified by  '$mysqlpasswd';"
+cat > ~/.my.cnf <<EOT
+[mysql]
+user=root
+password="$mysqlpasswd"
+EOT
+    mysql  --connect-expired-password  -e "create database wordpress_db;"
 
 
 }
@@ -206,33 +204,23 @@ install_nginx(){
 cat > /etc/nginx/nginx.conf <<-EOF
 user  nginx;
 worker_processes  1;
-
 error_log  /var/log/nginx/error.log warn;
 pid        /var/run/nginx.pid;
-
-
 events {
     worker_connections  1024;
 }
-
-
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
-
     log_format  main  '\$remote_addr - \$remote_user [\$time_local] "\$request" '
                       '\$status \$body_bytes_sent "\$http_referer" '
                       '"\$http_user_agent" "\$http_x_forwarded_for"';
-
     access_log  /var/log/nginx/access.log  main;
-
     sendfile        on;
     #tcp_nopush     on;
-
     keepalive_timeout  120;
     client_max_body_size 20m;
     #gzip  on;
-
     include /etc/nginx/conf.d/*.conf;
 }
 EOF
@@ -256,7 +244,6 @@ server {
     ssl_certificate_key /etc/nginx/ssl/$your_domain.key;
     return 404;
 }
-
 server { 
     listen       80;
     server_name  $your_domain;
@@ -360,7 +347,8 @@ uninstall_wp(){
     read -s -n1 -p "按回车键开始卸载，按ctrl+c取消"
     yum remove -y php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd mysql nginx
     rm -rf /usr/share/nginx/html/*
-    rm -rf /var/lib/mysql
+    rm -rf /var/lib/mysql	
+    rm -rf /usr/lib64/mysql
     rm -rf /usr/share/mysql
     green "=========="
     green " 卸载完成"
@@ -402,4 +390,3 @@ start_menu(){
 }
 
 start_menu
-
