@@ -43,13 +43,39 @@ fi
 
 disable_selinux(){
 
-    systemctl stop firewalld
-    systemctl disable firewalld
+yum -y install net-tools socat
+Port80=`netstat -tlpn | awk -F '[: ]+' '$1=="tcp"{print $5}' | grep -w 80`
+Port443=`netstat -tlpn | awk -F '[: ]+' '$1=="tcp"{print $5}' | grep -w 443`
+if [ -n "$Port80" ]; then
+    process80=`netstat -tlpn | awk -F '[: ]+' '$5=="80"{print $9}'`
+    red "==========================================================="
+    red "检测到80端口被占用，占用进程为：${process80}，本次安装结束"
+    red "==========================================================="
+    exit 1
+fi
+if [ -n "$Port443" ]; then
+    process443=`netstat -tlpn | awk -F '[: ]+' '$5=="443"{print $9}'`
+    red "============================================================="
+    red "检测到443端口被占用，占用进程为：${process443}，本次安装结束"
+    red "============================================================="
+    exit 1
+fi
+if [ -f "/etc/selinux/config" ]; then
     CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
     if [ "$CHECK" != "SELINUX=disabled" ]; then
-        semanage port -a -t http_port_t -p tcp 80
-        semanage port -a -t http_port_t -p tcp 443
+        green "检测到SELinux开启状态，添加放行80/443端口规则"
+        yum install -y policycoreutils-python >/dev/null 2>&1
+        semanage port -m -t http_port_t -p tcp 80
+        semanage port -m -t http_port_t -p tcp 443
     fi
+fi
+firewall_status=`systemctl status firewalld | grep "Active: active"`
+if [ -n "$firewall_status" ]; then
+    green "检测到firewalld开启状态，添加放行80/443端口规则"
+    firewall-cmd --zone=public --add-port=80/tcp --permanent
+    firewall-cmd --zone=public --add-port=443/tcp --permanent
+    firewall-cmd --reload
+fi
 }
 
 check_domain(){
@@ -67,26 +93,27 @@ install_php7(){
     green " 1.安装必要软件"
     green "==============="
     sleep 1
-    yum -y install epel-release
-    sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
+    wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    wget https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm
+    #sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
     yum -y install  unzip vim tcl expect curl socat
     echo
     echo
-    green "=========="
-    green "2.安装PHP7"
-    green "=========="
+    green "============"
+    green "2.安装PHP7.4"
+    green "============"
     sleep 1
-    rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
-    yum -y install php70w php70w-mysql php70w-gd php70w-xml php70w-fpm
-    service php-fpm start
-    chkconfig php-fpm on
-    if [ `yum list installed | grep php70 | wc -l` -ne 0 ]; then
+    yum -y install php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd
+    service php74-php-fpm start
+    chkconfig php74-php-fpm on
+    if [ `yum list installed | grep php74 | wc -l` -ne 0 ]; then
         echo
     	green "【checked】 PHP7安装成功"
-	echo
-	echo
-	sleep 2
-	php_status=1
+	    echo
+	    echo
+	    sleep 2
+	    php_status=1
     fi
 }
 
@@ -96,8 +123,9 @@ install_mysql(){
     green "  3.安装MySQL"
     green "==============="
     sleep 1
-    wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
-    rpm -ivh mysql-community-release-el7-5.noarch.rpm
+    #wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+    wget https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+    rpm -ivh mysql80-community-release-el7-3.noarch.rpm
     yum -y install mysql-server
     systemctl enable mysqld.service
     systemctl start  mysqld.service
@@ -114,24 +142,20 @@ install_mysql(){
     green "  4.配置MySQL"
     green "==============="
     sleep 2
-    mysqlpasswd=$(cat /dev/urandom | head -1 | md5sum | head -c 8)
-    
-/usr/bin/expect << EOF
-spawn mysql_secure_installation
-expect "password for root" {send "\r"}
-expect "root password" {send "Y\r"}
-expect "New password" {send "$mysqlpasswd\r"}
-expect "Re-enter new password" {send "$mysqlpasswd\r"}
-expect "Remove anonymous users" {send "Y\r"}
-expect "Disallow root login remotely" {send "Y\r"}
-expect "database and access" {send "Y\r"}
-expect "Reload privilege tables" {send "Y\r"}
-spawn mysql -u root -p
-expect "Enter password" {send "$mysqlpasswd\r"}
-expect "mysql" {send "create database wordpress_db;\r"}
-expect "mysql" {send "exit\r"}
-EOF
-
+    originpasswd=`cat /var/log/mysqld.log | grep password | head -1 | rev  | cut -d ' ' -f 1 | rev`
+    mysqlpasswd=`mkpasswd -l 18 -d 2 -c 3 -C 4 -s 5 | sed $'s/[\'\"]//g'`
+cat > ~/.my.cnf <<EOT
+[mysql]
+user=root
+password="$originpasswd"
+EOT
+    mysql  --connect-expired-password  -e "alter user 'root'@'localhost' identified by  '$mysqlpasswd';"
+cat > ~/.my.cnf <<EOT
+[mysql]
+user=root
+password="$mysqlpasswd"
+EOT
+    mysql  --connect-expired-password  -e "create database wordpress_db;"
 
 }
 
@@ -193,10 +217,15 @@ config_php(){
     echo
     echo
     sleep 1
-    sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/php.ini
-    sed -i "s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/php-fpm.d/www.conf
-    systemctl restart php-fpm.service
+    sed -i "s/upload_max_filesize = 2M/upload_max_filesize = 20M/;" /etc/opt/remi/php74/php.ini
+    sed -i "s/pm.start_servers = 5/pm.start_servers = 3/;s/pm.min_spare_servers = 5/pm.min_spare_servers = 3/;s/pm.max_spare_servers = 35/pm.max_spare_servers = 8/;" /etc/opt/remi/php74/php-fpm.d/www.conf
+    systemctl restart php74-php-fpm.service
     systemctl restart nginx.service
+    ~/.acme.sh/acme.sh  --issue --force  -d $your_domain  --nginx
+    ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
+        --key-file   /etc/nginx/ssl/$your_domain.key \
+        --fullchain-file /etc/nginx/ssl/fullchain.cer \
+	--reloadcmd  "systemctl restart nginx"	
 
 }
 
