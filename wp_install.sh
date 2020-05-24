@@ -331,7 +331,7 @@ install_wp(){
     echo
     echo
     sleep 1
-    sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s/password_here/$mysqlpasswd/;" /usr/share/nginx/html/wp-config.php
+    sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s?mysqlpasswd?$mysqlpasswd?;" /usr/share/nginx/html/wp-config.php
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
     chown -R nginx:root /usr/share/nginx/html/
     chmod -R 777 /usr/share/nginx/html/wp-content
