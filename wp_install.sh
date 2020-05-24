@@ -160,7 +160,7 @@ install_mysql(){
     green "  4.配置MySQL"
     green "==============="
     sleep 2
-	originpasswd=`cat /var/log/mysqld.log | grep password | head -1 | rev  | cut -d ' ' -f 1 | rev`
+    originpasswd=`cat /var/log/mysqld.log | grep password | head -1 | rev  | cut -d ' ' -f 1 | rev`
     mysqlpasswd=`mkpasswd -l 18 -d 2 -c 3 -C 4 -s 5 | sed $'s/[\'\"]//g'`
 cat > ~/.my.cnf <<EOT
 [mysql]
@@ -322,7 +322,7 @@ install_wp(){
     sleep 1
     cd /usr/share/nginx/html
     mv /usr/share/wordpresstemp/latest-zh_CN.zip ./
-    unzip latest-zh_CN.zip
+    unzip latest-zh_CN.zip >/dev/null 2>&1
     mv wordpress/* ./
     cp wp-config-sample.php wp-config.php
     green "===================="
