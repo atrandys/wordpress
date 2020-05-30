@@ -161,14 +161,15 @@ install_mysql(){
     green "==============="
     sleep 2
     originpasswd=`cat /var/log/mysqld.log | grep password | head -1 | rev  | cut -d ' ' -f 1 | rev`
-    mysqlpasswd=`mkpasswd -l 18 -d 2 -c 3 -C 4 -s 0 | sed $'s/[\'\"]//g'`
+    mysqlpasswd=`mkpasswd -l 18 -d 2 -c 3 -C 4 -s 5 | sed $'s/[\'\/\;\"\:]//g'`
 cat > ~/.my.cnf <<EOT
 [mysql]
 user=root
 password="$originpasswd"
 EOT
-    mysql  --connect-expired-password  -e "alter user 'root'@'localhost' identified by  '$mysqlpasswd';"
+    mysql  --connect-expired-password  -e "alter user 'root'@'localhost' identified by '$mysqlpasswd';"
     systemctl restart mysqld
+    sleep 5s
 cat > ~/.my.cnf <<EOT
 [mysql]
 user=root
