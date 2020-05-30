@@ -168,6 +168,7 @@ user=root
 password="$originpasswd"
 EOT
     mysql  --connect-expired-password  -e "alter user 'root'@'localhost' identified by  '$mysqlpasswd';"
+    systemctl restart mysqld
 cat > ~/.my.cnf <<EOT
 [mysql]
 user=root
