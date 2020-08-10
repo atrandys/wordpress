@@ -122,7 +122,7 @@ install_php7(){
     green "2.安装PHP7.4"
     green "============"
     sleep 1
-    yum -y install php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd
+    yum -y install php74 php74-php-gd  php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd php74-php-xml
     service php74-php-fpm start
     chkconfig php74-php-fpm on
     if [ `yum list installed | grep php74 | wc -l` -ne 0 ]; then
