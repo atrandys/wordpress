@@ -78,6 +78,27 @@ if [ -n "$firewall_status" ]; then
     systemctl stop firewalld
     systemctl disable firewalld
 fi
+    yum install -y iptables-services
+    systemctl start iptables
+    systemctl enable iptables
+    iptables -F
+    SSH_PORT=$(awk '$1=="Port" {print $2}' /etc/ssh/sshd_config)
+    if [ ! -n "$SSH_PORT" ]; then
+        iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+    else
+        iptables -A INPUT -p tcp -m tcp --dport ${SSH_PORT} -j ACCEPT
+    fi
+    iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+    iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+    iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+    iptables -A INPUT -i lo -j ACCEPT
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
+    iptables -P OUTPUT ACCEPT
+    service iptables save
+    green "==================================================================="
+    green "安全起见，iptables仅开启ssh,http,https端口，如需开放其他端口请自行放行"
+    green "==================================================================="
 }
 
 check_domain(){
