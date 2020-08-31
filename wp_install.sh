@@ -220,6 +220,7 @@ http {
                       '\$status \$body_bytes_sent "\$http_referer" '
                       '"\$http_user_agent" "\$http_x_forwarded_for"';
     access_log  /var/log/nginx/access.log  main;
+    error_log /var/log/nginx/error.log error;
     sendfile        on;
     #tcp_nopush     on;
     keepalive_timeout  120;
@@ -337,8 +338,9 @@ install_wp(){
     sleep 1
     sed -i "s/database_name_here/wordpress_db/;s/username_here/root/;s?password_here?$mysqlpasswd?;" /usr/share/nginx/html/wp-config.php
     echo "define('FS_METHOD', "direct");" >> /usr/share/nginx/html/wp-config.php
-    chown -R nginx:root /usr/share/nginx/html/
-    chmod -R 777 /usr/share/nginx/html/wp-content
+    chown -R apache:apache /usr/share/nginx/html/
+    #chmod 775 apache:apache /usr/share/nginx/html/ -Rf
+    chmod -R 775 /usr/share/nginx/html/wp-content
     green "==========================================================="
     green " WordPress服务端配置已完成，请打开浏览器访问您的域名进行前台配置"
     green " 数据库密码等信息参考文件：/usr/share/nginx/html/wp-config.php"
