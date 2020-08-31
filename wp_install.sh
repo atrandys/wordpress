@@ -71,10 +71,12 @@ if [ -f "/etc/selinux/config" ]; then
 fi
 firewall_status=`systemctl status firewalld | grep "Active: active"`
 if [ -n "$firewall_status" ]; then
-    green "检测到firewalld开启状态，添加放行80/443端口规则"
-    firewall-cmd --zone=public --add-port=80/tcp --permanent
-    firewall-cmd --zone=public --add-port=443/tcp --permanent
-    firewall-cmd --reload
+    #green "检测到firewalld开启状态，添加放行80/443端口规则"
+    #firewall-cmd --zone=public --add-port=80/tcp --permanent
+    #firewall-cmd --zone=public --add-port=443/tcp --permanent
+    #firewall-cmd --reload
+    systemctl stop firewalld
+    systemctl disable firewalld
 fi
 }
 
