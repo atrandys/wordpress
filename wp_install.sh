@@ -1,83 +1,77 @@
 #!/bin/bash
  
-function blue(){
+blue(){
     echo -e "\033[34m\033[01m$1\033[0m"
 }
-function green(){
+green(){
     echo -e "\033[32m\033[01m$1\033[0m"
 }
-function red(){
+red(){
     echo -e "\033[31m\033[01m$1\033[0m"
 }
-function yellow(){
+yellow(){
     echo -e "\033[33m\033[01m$1\033[0m"
-}
-function bred(){
-    echo -e "\033[31m\033[01m\033[05m$1\033[0m"
-}
-function byellow(){
-    echo -e "\033[33m\033[01m\033[05m$1\033[0m"
 }
 
 #判断系统
 check_os(){
-if [ ! -e '/etc/redhat-release' ]; then
-red "==============="
-red " 仅支持CentOS7"
-red "==============="
-exit
-fi
-if  [ -n "$(grep ' 6\.' /etc/redhat-release)" ] ;then
-red "==============="
-red " 仅支持CentOS7"
-red "==============="
-exit
-fi
-if  [ -n "$(grep ' 8\.' /etc/redhat-release)" ] ;then
-red "==============="
-red " 仅支持CentOS7"
-red "==============="
-exit
-fi
+    if [ ! -e '/etc/redhat-release' ]; then
+        red "==============="
+        red " 仅支持CentOS7"
+        red "==============="
+        exit
+    fi
+    if  [ -n "$(grep ' 6\.' /etc/redhat-release)" ] ;then
+        red "==============="
+        red " 仅支持CentOS7"
+        red "==============="
+        exit
+    fi
+    if  [ -n "$(grep ' 8\.' /etc/redhat-release)" ] ;then
+        red "==============="
+        red " 仅支持CentOS7"
+        red "==============="
+        exit
+    fi
 }
 
 disable_selinux(){
 
-yum -y install net-tools socat
-Port80=`netstat -tlpn | awk -F '[: ]+' '$1=="tcp"{print $5}' | grep -w 80`
-Port443=`netstat -tlpn | awk -F '[: ]+' '$1=="tcp"{print $5}' | grep -w 443`
-if [ -n "$Port80" ]; then
-    process80=`netstat -tlpn | awk -F '[: ]+' '$5=="80"{print $9}'`
-    red "==========================================================="
-    red "检测到80端口被占用，占用进程为：${process80}，本次安装结束"
-    red "==========================================================="
-    exit 1
-fi
-if [ -n "$Port443" ]; then
-    process443=`netstat -tlpn | awk -F '[: ]+' '$5=="443"{print $9}'`
-    red "============================================================="
-    red "检测到443端口被占用，占用进程为：${process443}，本次安装结束"
-    red "============================================================="
-    exit 1
-fi
-if [ -f "/etc/selinux/config" ]; then
-    CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
-    if [ "$CHECK" != "SELINUX=disabled" ]; then
-        green "检测到SELinux开启状态，添加放行80/443端口规则"
-        yum install -y policycoreutils-python >/dev/null 2>&1
-        semanage port -m -t http_port_t -p tcp 80
-        semanage port -m -t http_port_t -p tcp 443
+    yum -y install net-tools socat
+    Port80=`netstat -tlpn | awk -F '[: ]+' '$1=="tcp"{print $5}' | grep -w 80`
+    Port443=`netstat -tlpn | awk -F '[: ]+' '$1=="tcp"{print $5}' | grep -w 443`
+    if [ -n "$Port80" ]; then
+        process80=`netstat -tlpn | awk -F '[: ]+' '$5=="80"{print $9}'`
+        red "==========================================================="
+        red "检测到80端口被占用，占用进程为：${process80}，本次安装结束"
+        red "==========================================================="
+        exit 1
     fi
-fi
-firewall_status=`systemctl status firewalld | grep "Active: active"`
-if [ -n "$firewall_status" ]; then
-    #green "检测到firewalld开启状态，添加放行80/443端口规则"
-    #firewall-cmd --zone=public --add-port=80/tcp --permanent
-    #firewall-cmd --zone=public --add-port=443/tcp --permanent
-    #firewall-cmd --reload
-    systemctl stop firewalld
-    systemctl disable firewalld
-fi
+    if [ -n "$Port443" ]; then
+        process443=`netstat -tlpn | awk -F '[: ]+' '$5=="443"{print $9}'`
+        red "============================================================="
+        red "检测到443端口被占用，占用进程为：${process443}，本次安装结束"
+        red "============================================================="
+        exit 1
+    fi
+    if [ -f "/etc/selinux/config" ]; then
+        CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
+        if [ "$CHECK" != "SELINUX=disabled" ]; then
+            green "检测到SELinux开启状态，添加放行80/443端口规则"
+            yum install -y policycoreutils-python >/dev/null 2>&1
+            semanage port -m -t http_port_t -p tcp 80
+            semanage port -m -t http_port_t -p tcp 443
+        fi
+    fi
+    firewall_status=`systemctl status firewalld | grep "Active: active"`
+    if [ -n "$firewall_status" ]; then
+        green "检测到firewalld开启状态，关闭firewalld"
+        #firewall-cmd --zone=public --add-port=80/tcp --permanent
+        #firewall-cmd --zone=public --add-port=443/tcp --permanent
+        #firewall-cmd --reload
+        systemctl stop firewalld
+        systemctl disable firewalld
+    fi
     yum install -y iptables-services
     systemctl start iptables
     systemctl enable iptables
@@ -96,35 +90,36 @@ fi
     iptables -P FORWARD DROP
     iptables -P OUTPUT ACCEPT
     service iptables save
-    green "==================================================================="
+    green "====================================================================="
     green "安全起见，iptables仅开启ssh,http,https端口，如需开放其他端口请自行放行"
-    green "==================================================================="
+    green "====================================================================="
 }
 
 check_domain(){
-    green "======================="
+    green "========================="
     yellow "请输入绑定到本VPS的域名"
-    green "======================="
+    yellow "   安装时请关闭CDN"
+    green "========================="
     read your_domain
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ] ; then
-    	green "============================="
-	    green "域名解析正常，开始安装wordpress"
-	    green "============================="
-	    sleep 1s
-	    download_wp
-	    install_php7
+        green "============================="
+        green "域名解析正常，开始安装wordpress"
+        green "============================="
+        sleep 1s
+        download_wp
+        install_php7
         install_mysql
         install_nginx
-	    config_php
+        config_php
         install_wp
     else
-        red "================================"
-	    red "域名解析地址与本VPS IP地址不一致"
-	    red "本次安装失败，请确保域名解析正常"
-	    red "================================"
-	    exit 1
+        red "================================="
+        red "域名解析地址与本VPS IP地址不一致"
+        red "本次安装失败，请确保域名解析正常"
+        red "================================="
+        exit 1
     fi
 }
 
@@ -150,11 +145,11 @@ install_php7(){
     chkconfig php74-php-fpm on
     if [ `yum list installed | grep php74 | wc -l` -ne 0 ]; then
         echo
-    	green "【checked】 PHP7安装成功"
-	    echo
-	    echo
-	    sleep 2
-	    php_status=1
+        green "【checked】 PHP7安装成功"
+        echo
+        echo
+        sleep 2
+        php_status=1
     fi
 }
 
@@ -165,17 +160,17 @@ install_mysql(){
     green "==============="
     sleep 1
     #wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
-	wget https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+    wget https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
     rpm -ivh mysql80-community-release-el7-3.noarch.rpm
     yum -y install mysql-server
     systemctl enable mysqld.service
     systemctl start  mysqld.service
     if [ `yum list installed | grep mysql-community | wc -l` -ne 0 ]; then
-    	green "【checked】 MySQL安装成功"
-	    echo
-	    echo
-	    sleep 2
-	    mysql_status=1
+        green "【checked】 MySQL安装成功"
+        echo
+        echo
+        sleep 2
+        mysql_status=1
     fi
     echo
     echo
@@ -218,12 +213,12 @@ install_nginx(){
     rm -f /etc/nginx/nginx.conf
     mkdir /etc/nginx/ssl
     if [ `yum list installed | grep nginx | wc -l` -ne 0 ]; then
-    	echo
-	green "【checked】 nginx安装成功"
-	echo
-	echo
-	sleep 1
-	mysql_status=1
+        echo
+        green "【checked】 nginx安装成功"
+        echo
+        echo
+        sleep 1
+        mysql_status=1
     fi
 
 cat > /etc/nginx/nginx.conf <<-EOF
@@ -256,7 +251,7 @@ EOF
     ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
         --key-file   /etc/nginx/ssl/$your_domain.key \
         --fullchain-file /etc/nginx/ssl/fullchain.cer
-	
+
 cat > /etc/nginx/conf.d/default.conf<<-EOF
 server {
     listen 80 default_server;
@@ -287,9 +282,9 @@ server {
     add_header Strict-Transport-Security "max-age=31536000";
     access_log /var/log/nginx/hostscube.log combined;
     location ~ \.php$ {
-    	fastcgi_pass 127.0.0.1:9000;
-    	fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-    	include fastcgi_params;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        include fastcgi_params;
     }
     location / {
        try_files \$uri \$uri/ /index.php?\$args;
@@ -316,7 +311,7 @@ config_php(){
     ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
         --key-file   /etc/nginx/ssl/$your_domain.key \
         --fullchain-file /etc/nginx/ssl/fullchain.cer \
-	--reloadcmd  "systemctl restart nginx"	
+        --reloadcmd  "systemctl restart nginx"	
 
 }
 
@@ -328,13 +323,13 @@ download_wp(){
     cd /usr/share/wordpresstemp/
     wget https://cn.wordpress.org/latest-zh_CN.zip
     if [ ! -f "/usr/share/wordpresstemp/latest-zh_CN.zip" ]; then
-    	red "从cn官网下载wordpress失败，尝试从github下载……"
-	wget https://github.com/atrandys/wordpress/raw/master/latest-zh_CN.zip    
+        red "从cn官网下载wordpress失败，尝试从github下载……"
+    wget https://github.com/atrandys/wordpress/raw/master/latest-zh_CN.zip    
     fi
     if [ ! -f "/usr/share/wordpresstemp/latest-zh_CN.zip" ]; then
-	red "我它喵的从github下载wordpress也失败了，请尝试手动安装……"
-	green "从wordpress官网下载包然后命名为latest-zh_CN.zip，新建目录/usr/share/wordpresstemp/，上传到此目录下即可"
-	exit 1
+    red "我它喵的从github下载wordpress也失败了，请尝试手动安装……"
+    green "从wordpress官网下载包然后命名为latest-zh_CN.zip，新建目录/usr/share/wordpresstemp/，上传到此目录下即可"
+    exit 1
     fi
 }
 
@@ -396,23 +391,23 @@ start_menu(){
     echo
     read -p "请输入数字:" num
     case "$num" in
-    	1)
-	check_os
-	disable_selinux
-        check_domain
-	;;
-	2)
-	uninstall_wp
-	;;
-	0)
-	exit 1
-	;;
-	*)
-	clear
-	echo "请输入正确数字"
-	sleep 2s
-	start_menu
-	;;
+    1)
+    check_os
+    disable_selinux
+    check_domain
+    ;;
+    2)
+    uninstall_wp
+    ;;
+    0)
+    exit 1
+    ;;
+    *)
+    clear
+    echo "请输入正确数字"
+    sleep 2s
+    start_menu
+    ;;
     esac
 }
 
