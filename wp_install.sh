@@ -383,7 +383,7 @@ start_menu(){
     green " 介绍：适用于CentOS7，一键安装wordpress"
     green " 作者：atrandys"
     green " 网站：www.atrandys.com"
-    green " Youtube：Randy's 堡垒"
+    green " Youtube：atrandys"
     green "======================================="
     green "1. 一键安装wordpress"
     red "2. 卸载wordpress"
