@@ -131,7 +131,7 @@ install_php7(){
     sleep 1
     wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     wget https://rpms.remirepo.net/enterprise/remi-release-7.rpm
-    rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm
+    rpm -Uvh remi-release-7.rpm epel-release-latest-7.noarch.rpm --force --nodeps
     #sed -i "0,/enabled=0/s//enabled=1/" /etc/yum.repos.d/epel.repo
     yum -y install  unzip vim tcl expect curl socat
     echo
@@ -161,7 +161,7 @@ install_mysql(){
     sleep 1
     #wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
     wget https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
-    rpm -ivh mysql80-community-release-el7-3.noarch.rpm
+    rpm -ivh mysql80-community-release-el7-3.noarch.rpm --force --nodeps
     yum -y install mysql-server
     systemctl enable mysqld.service
     systemctl start  mysqld.service
@@ -205,7 +205,7 @@ install_nginx(){
     green "  5.安装nginx"
     green "==============="
     sleep 1
-    rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
+    rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm --force --nodeps
     yum install -y nginx
     systemctl enable nginx.service
     systemctl stop nginx.service
