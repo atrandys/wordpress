@@ -56,11 +56,21 @@ disable_selinux(){
     fi
     if [ -f "/etc/selinux/config" ]; then
         CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
-        if [ "$CHECK" != "SELINUX=disabled" ]; then
-            green "检测到SELinux开启状态，添加放行80/443端口规则"
-            yum install -y policycoreutils-python >/dev/null 2>&1
-            semanage port -m -t http_port_t -p tcp 80
-            semanage port -m -t http_port_t -p tcp 443
+        if [ "$CHECK" == "SELINUX=enforcing" ]; then
+            loggreen "$(date +"%Y-%m-%d %H:%M:%S") - SELinux状态非disabled,关闭SELinux."
+            setenforce 0
+            sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+            #loggreen "SELinux is not disabled, add port 80/443 to SELinux rules."
+            #loggreen "==== Install semanage"
+            #logcmd "yum install -y policycoreutils-python"
+            #semanage port -a -t http_port_t -p tcp 80
+            #semanage port -a -t http_port_t -p tcp 443
+            #semanage port -a -t http_port_t -p tcp 37212
+            #semanage port -a -t http_port_t -p tcp 37213
+        elif [ "$CHECK" == "SELINUX=permissive" ]; then
+            loggreen "$(date +"%Y-%m-%d %H:%M:%S") - SELinux状态非disabled,关闭SELinux."
+            setenforce 0
+            sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/sysconfig/selinux
         fi
     fi
     firewall_status=`systemctl status firewalld | grep "Active: active"`
@@ -140,7 +150,7 @@ install_php7(){
     green "2.安装PHP7.4"
     green "============"
     sleep 1
-    yum -y install php74 php74-php-gd php74-php-opcache php74-php-pdo php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd php74-php-xml
+    yum -y install php74 php74-php-gd php74-php-opcache php74-php-pdo php74-php-redis php74-php-mbstring php74-php-cli php74-php-fpm php74-php-mysqlnd php74-php-xml
     service php74-php-fpm start
     chkconfig php74-php-fpm on
     if [ `yum list installed | grep php74 | wc -l` -ne 0 ]; then
@@ -205,7 +215,14 @@ install_nginx(){
     green "  5.安装nginx"
     green "==============="
     sleep 1
-    rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm --force --nodeps
+    #rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm --force --nodeps
+    while [ ! -f "nginx-release-centos-7-0.el7.ngx.noarch.rpm" ]
+    do
+        logcmd "wget http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm"
+        if [ ! -f "nginx-release-centos-7-0.el7.ngx.noarch.rpm" ]; then
+            logred "$(date +"%Y-%m-%d %H:%M:%S") - 下载nginx rpm包失败，继续重试..."
+        fi
+    done
     yum install -y nginx
     systemctl enable nginx.service
     systemctl stop nginx.service
@@ -292,6 +309,12 @@ server {
 }
 EOF
 
+}
+
+install_redis(){
+    yum install -y redis
+    systemctl start redis
+    
 }
 
 config_php(){
