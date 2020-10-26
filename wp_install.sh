@@ -57,7 +57,7 @@ disable_selinux(){
     if [ -f "/etc/selinux/config" ]; then
         CHECK=$(grep SELINUX= /etc/selinux/config | grep -v "#")
         if [ "$CHECK" == "SELINUX=enforcing" ]; then
-            loggreen "$(date +"%Y-%m-%d %H:%M:%S") - SELinux状态非disabled,关闭SELinux."
+            green "$(date +"%Y-%m-%d %H:%M:%S") - SELinux状态非disabled,关闭SELinux."
             setenforce 0
             sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
             #loggreen "SELinux is not disabled, add port 80/443 to SELinux rules."
@@ -68,7 +68,7 @@ disable_selinux(){
             #semanage port -a -t http_port_t -p tcp 37212
             #semanage port -a -t http_port_t -p tcp 37213
         elif [ "$CHECK" == "SELINUX=permissive" ]; then
-            loggreen "$(date +"%Y-%m-%d %H:%M:%S") - SELinux状态非disabled,关闭SELinux."
+            green "$(date +"%Y-%m-%d %H:%M:%S") - SELinux状态非disabled,关闭SELinux."
             setenforce 0
             sed -i 's/SELINUX=permissive/SELINUX=disabled/g' /etc/selinux/config
         fi
