@@ -223,6 +223,7 @@ install_nginx(){
             logred "$(date +"%Y-%m-%d %H:%M:%S") - 下载nginx rpm包失败，继续重试..."
         fi
     done
+    rpm -Uvh nginx-release-centos-7-0.el7.ngx.noarch.rpm --force --nodeps
     yum install -y nginx
     systemctl enable nginx.service
     systemctl stop nginx.service
